@@ -1,0 +1,27 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environment files
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Distribution
+*.zip
+vulncheck-submission.zip
+
+# Common alternative venv names
+.venv_old/
+env_old/
+venv_old/

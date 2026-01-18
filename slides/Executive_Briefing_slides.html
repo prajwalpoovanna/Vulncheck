@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Executive Briefing — Vulnerability Prioritization</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f8f8f8; color: #222; }
+    .slide { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; padding: 40px 60px 40px 60px; }
+    h1, h2 { color: #1a4a7a; }
+    .subtitle { font-size: 1.2em; color: #555; margin-bottom: 24px; }
+    ul { margin-top: 0; }
+    .section { margin-bottom: 48px; }
+    .key { font-weight: bold; }
+    .appendix-table { font-size: 0.95em; border-collapse: collapse; width: 100%; margin-top: 12px; }
+    .appendix-table th, .appendix-table td { border: 1px solid #ccc; padding: 4px 8px; }
+    .appendix-table th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div class="slide section">
+    <h1>Vulnerability Prioritization — Acme Financial Services</h1>
+    <div class="subtitle">Executive Briefing for CISO &amp; Security Leadership</div>
+    <h2>TL;DR Recommendation</h2>
+    <ul>
+      <li>No critical or high CVEs found; all detected vulnerabilities are low severity.</li>
+      <li>No active exploits or KEV matches for your assets.</li>
+      <li>Maintain regular patching and monitoring.</li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>Scope &amp; Methodology</h2>
+    <ul>
+      <li><span class="key">Data sources:</span> VulnCheck API, CPEs analyzed (Palo Alto PAN-OS, Microsoft Windows Server 2025, Smart-HM WebIG, Vantiv Virtual Traffic Management)</li>
+      <li><span class="key">Date range:</span> 2025-03-12 to 2025-12-12</li>
+      <li><span class="key">Method:</span> Automated enrichment with CVSS, EPSS, KEV, exploit intelligence</li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>Key Findings</h2>
+    <ul>
+      <li><span class="key">Total CVEs found:</span> 10</li>
+      <li><span class="key">Critical:</span> 0 &nbsp; <span class="key">High:</span> 0 &nbsp; <span class="key">Medium:</span> 0 &nbsp; <span class="key">Low:</span> 10</li>
+      <li><span class="key">With exploits:</span> 0</li>
+      <li><span class="key">CISA KEV:</span> 0 &nbsp; <span class="key">VulnCheck KEV:</span> 0</li>
+      <li><span class="key">Top 5 CVEs:</span>
+        <ul>
+          <li>CVE-2025-0116, CVE-2025-0125, CVE-2025-0137, CVE-2025-4614, CVE-2025-4615</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>What It Means for Acme</h2>
+    <ul>
+      <li>All vulnerabilities are low risk; no immediate critical threats.</li>
+      <li>No known exploits or KEV matches for your assets.</li>
+      <li>Focus on maintaining patch hygiene and monitoring for new threats.</li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>Recommended Next Steps</h2>
+    <ul>
+      <li>Continue regular patching.</li>
+      <li>Monitor for new KEV or exploit activity.</li>
+      <li>Review compensating controls for low-severity issues.</li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>How VulnCheck Intelligence Helped</h2>
+    <ul>
+      <li>Automated enrichment provided up-to-date exploit and KEV status.</li>
+      <li>No weaponized or actively exploited vulnerabilities detected.</li>
+      <li>Confidence in current risk posture.</li>
+    </ul>
+  </div>
+  <div class="slide section">
+    <h2>Appendix: Dataset Snapshot &amp; Caveats</h2>
+    <div><span class="key">Dataset snapshot (top 5 CVEs):</span></div>
+    <table class="appendix-table">
+      <tr><th>CVE ID</th><th>CVSS</th><th>Severity</th><th>Exploit?</th><th>KEV?</th><th>Description (truncated)</th></tr>
+      <tr><td>CVE-2025-0116</td><td>0.0</td><td>UNKNOWN</td><td>No</td><td>No</td><td>A Denial of Service (DoS) vulnerability in Palo Alto Networks PAN-OS software causes the firewall to unexpectedly reboot...</td></tr>
+      <tr><td>CVE-2025-0125</td><td>0.0</td><td>UNKNOWN</td><td>No</td><td>No</td><td>An improper input neutralization vulnerability in the management web interface of the Palo Alto Networks PAN-OS® software enables a malicious authenticated read-write administrator to impersonate anot...</td></tr>
+      <tr><td>CVE-2025-0137</td><td>0.0</td><td>UNKNOWN</td><td>No</td><td>No</td><td>An improper input neutralization vulnerability in the management web interface of the Palo Alto Networks PAN-OS® software enables a malicious authenticated read-write administrator to impersonate anot...</td></tr>
+      <tr><td>CVE-2025-4614</td><td>0.0</td><td>UNKNOWN</td><td>No</td><td>No</td><td>An information disclosure vulnerability in Palo Alto Networks PAN-OS® software enables an authenticated administrator to view session tokens of users authenticated to the firewall web UI...</td></tr>
+      <tr><td>CVE-2025-4615</td><td>0.0</td><td>UNKNOWN</td><td>No</td><td>No</td><td>An improper input neutralization vulnerability in the management web interface of the Palo Alto Networks PAN-OS® software enables an authenticated administrator to bypass system restrictions and execu...</td></tr>
+    </table>
+    <ul>
+      <li>Data is point-in-time; new threats may emerge.</li>
+      <li>Only selected CPEs/assets were analyzed.</li>
+    </ul>
+  </div>
+</body>
+</html>
+  <div class="slide" style="background:#0b3954;color:white">
+    <div class="title">Vulnerability Prioritization — Acme Financial Services</div>
+    <div class="subtitle">Executive Briefing</div>
+    <div class="content">TLDR: Prioritize remediations by evidence-based pyramid focusing on weaponized, KEV-linked vulnerabilities.</div>
+  </div>
+
+  <div class="slide" style="background:#ffffff;color:#111">
+    <div class="title">Scope & Methodology</div>
+    <div class="content">We analyzed sample CPEs, enriched CVEs via VulnCheck (CVSS, EPSS, KEV, exploits), classified by prioritization tiers, and built a dashboard for investigation.</div>
+  </div>
+
+  <div class="slide" style="background:#f4f4f4;color:#111">
+    <div class="title">Key Findings</div>
+    <div class="content">Top critical CVEs with weaponized exploits identified; several CVEs show active exploits — recommend urgent patching for those mapped to critical systems.</div>
+  </div>
+
+  <div class="slide" style="background:#fff;color:#111">
+    <div class="title">Recommendations</div>
+    <div class="content">1) Patch weaponized & KEV vulnerabilities; 2) Isolate affected systems; 3) Add compensating controls and monitoring; 4) Use VulnCheck feeds for ongoing detection.</div>
+  </div>
+
+  <div class="slide" style="background:#e8f1f8;color:#111">
+    <div class="title">How VulnCheck Helped</div>
+    <div class="content">Exploit maturity, KEV mapping and timelines enabled precise prioritization reducing noise from lower-risk items.</div>
+  </div>
+
+  <div class="slide" style="background:#ffffff;color:#111">
+    <div class="title">Appendix & Next Steps</div>
+    <div class="content">Dataset snapshot included in the repo; next: full environment scan, schedule patch window, validation testing.</div>
+  </div>
+
+  <div class="footer">VulnCheck Intelligence • Data snapshot</div>
+</body>
+</html>
