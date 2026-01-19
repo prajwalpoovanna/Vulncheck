@@ -2,6 +2,8 @@
 
 This runbook provides step-by-step instructions for demonstrating each component of the VulnCheck technical exercise.
 
+⚠️ **Important:** API values change with each run. Talking points below are flexible and reference "your actual data." Adapt numbers to match live dashboard output.
+
 ---
 
 ## Pre-Demo Setup (5 minutes before)
@@ -65,11 +67,11 @@ python run_analysis.py
 cat analysis/analysis_summary.md
 ```
 
-**Key Highlights:**
-- ✅ "10 CVEs found across our 4 systems"
-- ✅ "2 HIGH severity (CVSS ≥ 7.0) requiring immediate attention"
-- ✅ "1 CVE with confirmed active exploits (CVE-2025-0133)"
-- ✅ "Top risk: CVE-2025-0133 with risk score of 6.79 despite no CVSS yet"
+**Key Highlights (adapt to your actual data):**
+- ✅ "Look at the total CVEs found across our 4 systems"
+- ✅ "Notice how many are HIGH severity (CVSS ≥ 7.0)"
+- ✅ "See which CVEs have confirmed active exploits"
+- ✅ "The highest risk CVE may have low CVSS but high EPSS and exploit confirmation"
 
 **4. Show the Enriched Data**
 ```bash
@@ -80,7 +82,7 @@ head -5 analysis/enriched_vulnerabilities.csv | column -t -s,
 **Talking Points:**
 - "Each CVE is enriched with CVSS, EPSS, KEV status, exploit intelligence"
 - "Risk score calculated using: CVSS (40%) + EPSS (30%) + KEV bonus + Exploit bonus"
-- "Notice CVE-2025-0133: 0.0 CVSS but 6% EPSS and confirmed exploit = highest priority"
+- "Look at the top CVE - notice how risk score prioritizes based on exploit data, not just CVSS"
 
 ---
 
@@ -118,17 +120,17 @@ open http://localhost:8050
 **A. Key Metrics Cards (Top Section)**
 
 **Talking Points:**
-- "At a glance: 10 total CVEs, 2 HIGH severity, 1 with active exploits"
-- "Average risk score of 1.69 (moderate overall risk)"
-- "Zero CISA KEV entries means no government-confirmed active threats yet"
+- "At a glance you can see total CVEs, severity breakdown, and exploit status"
+- "Average risk score indicates overall risk posture - adapt based on actual value"
+- "CISA KEV count shows government-confirmed exploited vulnerabilities in our environment"
 
 **B. Prioritization Pyramid**
 
 **Talking Points:**
 - "This is the heart of evidence-based prioritization"
 - "7 tiers from most critical (Ransomware) to least (All Other)"
-- "1 CVE in Proof-of-Concept tier (has exploit code available)"
-- "9 CVEs in 'All Other' tier (monitor but lower priority)"
+- "Look at distribution across tiers - notice CVEs with exploits in top tiers"
+- "CVEs without exploits in lower tiers - still important but lower priority"
 - **Key Point**: "We prioritize based on exploit availability, not just CVSS"
 
 **C. CVSS Distribution Chart**
@@ -287,17 +289,18 @@ cat slides/EXECTIVE_BRIEFING.md
 **Q: What if we have hundreds of CVEs?**
 > "The dashboard scales well. You can filter by system, tier, or severity. Export filtered data to JIRA/ServiceNow for ticket creation. The prioritization pyramid ensures you focus on the top 10-20 highest risk CVEs first."
 
-**Q: Why is CVE-2025-0133 top priority with 0.0 CVSS?**
-> "This is the power of threat intelligence. CVSS is backward-looking (how bad is the vulnerability). EPSS + exploit data is forward-looking (will this be exploited). Active exploit + 6% EPSS = imminent threat despite no CVSS."
+**Q: Why are some low-CVSS CVEs ranked higher than high-CVSS ones?**
+> "CVSS is backward-looking (theoretical severity). EPSS + exploit data is forward-looking (will it actually be exploited). An unscored CVE with confirmed exploits is an imminent threat. Our algorithm weighs exploit data heavily for smarter prioritization."
 
 **Q: How accurate is EPSS?**
-> "EPSS is maintained by FIRST.org using ML models trained on 10+ years of exploitation data. 6% probability puts CVE-2025-0133 in the 90th percentile - only 10% of CVEs are more likely to be exploited."
+> "EPSS is maintained by FIRST.org using ML models trained on 10+ years of data. A 6% probability means 90th percentile - only 10% of CVEs are more likely to be exploited. Statistically rigorous and proven effective."
 
 **Q: Can this integrate with our existing tools?**
 > "Yes. The CSV export works with Excel/JIRA. The JSON output integrates with SIEMs, Splunk, or ElasticSearch. VulnCheck has official integrations with Tenable, Qualys, and Rapid7."
 
 **Q: What about false positives?**
-> "The analysis includes compensating controls section. CVE-2025-0130 is HIGH severity but LOW EPSS (0.04%) = patch in normal cycle. CVE-2025-0133 has exploit + 6% EPSS = emergency patch."
+> "That's why we use multiple signals. A HIGH severity CVE with LOW EPSS goes into normal patching. One with confirmed exploits + high EPSS gets emergency treatment. Multiple data sources minimize false positives."
+
 
 ---
 

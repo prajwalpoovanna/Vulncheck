@@ -214,7 +214,6 @@ app.layout = dbc.Container([
                 ],
                 data=df.to_dict('records'),
                 sort_action='native',
-                filter_action='native',
                 page_size=15,
                 style_table={'overflowX': 'auto'},
                 style_cell={
