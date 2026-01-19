@@ -3,8 +3,6 @@
 Step 1: Technical Analysis
 Load CPEs, fetch CVEs from VulnCheck, and enrich with exploit intelligence.
 """
-import argparse
-import json
 import os
 import logging
 import pandas as pd
@@ -66,6 +64,7 @@ def enrich_cve_details(cve_id):
     try:
         vuln_url = f"{BASE_URL}/index/vulncheck-nvd2"
         exploit_url = f"{BASE_URL}/index/exploits"
+        epss_url = f"{BASE_URL}/index/epss"
 
         logger.info("Enriching CVE %s", cve_id)
         vuln_resp = SESSION.get(vuln_url, params={'cve': cve_id}, timeout=15)
@@ -75,28 +74,58 @@ def enrich_cve_details(cve_id):
         exploit_resp = SESSION.get(exploit_url, params={'cve': cve_id}, timeout=15)
         exploit_resp.raise_for_status()
         exploit_data = exploit_resp.json().get('data', [])
+        
+        # Fetch EPSS data from separate endpoint
+        epss_resp = SESSION.get(epss_url, params={'cve': cve_id}, timeout=15)
+        epss_resp.raise_for_status()
+        epss_data = epss_resp.json().get('data', [{}])[0] if epss_resp.json().get('data') else {}
 
-        cvss_v3 = vuln_data.get('cvssV3', {})
-        cvss_v2 = vuln_data.get('cvssV2', {})
-        cvss_v3_score = cvss_v3.get('baseScore')
-        cvss_v3_severity = cvss_v3.get('baseSeverity')
+        # Extract CVSS from nested metrics structure
+        metrics = vuln_data.get('metrics', {})
+        cvss_v3_score = None
+        cvss_v3_severity = None
+        
+        # Try CVSS v3.1 first (Primary source)
+        if 'cvssMetricV31' in metrics and metrics['cvssMetricV31']:
+            for metric in metrics['cvssMetricV31']:
+                if metric.get('type') == 'Primary':
+                    cvss_data = metric.get('cvssData', {})
+                    cvss_v3_score = cvss_data.get('baseScore')
+                    cvss_v3_severity = cvss_data.get('baseSeverity')
+                    break
+        
+        # Fallback to CVSS v3.0 if v3.1 not found
+        if cvss_v3_score is None and 'cvssMetricV30' in metrics and metrics['cvssMetricV30']:
+            for metric in metrics['cvssMetricV30']:
+                if metric.get('type') == 'Primary':
+                    cvss_data = metric.get('cvssData', {})
+                    cvss_v3_score = cvss_data.get('baseScore')
+                    cvss_v3_severity = cvss_data.get('baseSeverity')
+                    break
+        
+        # Fallback to CVSS v2 if no v3 found
+        if cvss_v3_score is None and 'cvssMetricV2' in metrics and metrics['cvssMetricV2']:
+            for metric in metrics['cvssMetricV2']:
+                cvss_data = metric.get('cvssData', {})
+                cvss_v3_score = cvss_data.get('baseScore')
+                cvss_v3_severity = cvss_data.get('baseSeverity')
+                break
+        
+        # Final defaults
         if cvss_v3_score is None:
-            cvss_v3_score = cvss_v2.get('baseScore')
-        if cvss_v3_severity is None:
-            cvss_v3_severity = cvss_v2.get('baseSeverity')
-        if cvss_v3_score is None:
-            cvss_v3_score = vuln_data.get('cvssScore', 0.0)
+            cvss_v3_score = 0.0
         if cvss_v3_severity is None:
             cvss_v3_severity = 'UNKNOWN'
-        epss = vuln_data.get('epss', {})
-        epss_score = epss.get('score', 0.0)
-        epss_percentile = epss.get('percentile', 0.0)
+            
+        # Extract EPSS data
+        epss_score = epss_data.get('epss_score', 0.0)
+        epss_percentile = epss_data.get('epss_percentile', 0.0)
         return {
             'cve_id': cve_id,
-            'cvss_v3_score': cvss_v3_score if cvss_v3_score is not None else 0.0,
+            'cvss_v3_score': cvss_v3_score,
             'cvss_v3_severity': cvss_v3_severity,
-            'epss_score': epss_score if epss_score is not None else 0.0,
-            'epss_percentile': epss_percentile if epss_percentile is not None else 0.0,
+            'epss_score': epss_score,
+            'epss_percentile': epss_percentile,
             'cisa_kev': vuln_data.get('cisa_kev', False),
             'vulncheck_kev': vuln_data.get('vulncheck_kev', False),
             'has_exploit': len(exploit_data) > 0,
@@ -152,57 +181,28 @@ def main():
     
     # Create DataFrame
     df = pd.DataFrame(all_cves)
-    # If no CVEs were gathered, write empty outputs and exit gracefully
     if df.empty:
-        output_dir = Path("analysis")
-        output_dir.mkdir(exist_ok=True)
-
-        # write empty CSV/JSON
-        csv_path = output_dir / "enriched_vulnerabilities.csv"
-        df.to_csv(csv_path, index=False)
-        json_path = output_dir / "vulnerabilities.json"
-        df.to_json(json_path, orient="records", indent=2)
-
-        summary = f"""
-        ========================
-        ANALYSIS SUMMARY
-        ========================
-        Total CVEs Found: 0
-
-        No CVE data was retrieved. This commonly indicates an authorization
-        issue when calling the VulnCheck API (HTTP 401). Please ensure
-        that `VULNCHECK_API_KEY` is set and valid in your environment or
-        in a .env file.
-        """
-
-        summary_path = output_dir / "analysis_summary.md"
-        with open(summary_path, "w") as f:
-            f.write(summary)
-
-        print(summary)
-        print(f"✅ Wrote empty outputs to: {output_dir}")
+        print("❌ No CVE data retrieved. Check your VULNCHECK_API_KEY in .env file.")
         raise SystemExit(1)
 
     # Step 2: Apply priority tier classification
-    else:
-        df['priority_tier'] = df.apply(classify_priority_tier, axis=1)
-        
-        # Coerce numeric types to ensure consistent formatting/operations
-        # Ensure NaN values are properly filled before calculations
-        df['cvss_v3_score'] = pd.to_numeric(df['cvss_v3_score'], errors='coerce').fillna(0.0)
-        df['epss_score'] = pd.to_numeric(df['epss_score'], errors='coerce').fillna(0.0)
-        df['exploit_count'] = pd.to_numeric(df['exploit_count'], errors='coerce').fillna(0).astype(int)
+    df['priority_tier'] = df.apply(classify_priority_tier, axis=1)
+    
+    # Ensure numeric types
+    df['cvss_v3_score'] = pd.to_numeric(df['cvss_v3_score'], errors='coerce').fillna(0.0)
+    df['epss_score'] = pd.to_numeric(df['epss_score'], errors='coerce').fillna(0.0)
+    df['exploit_count'] = pd.to_numeric(df['exploit_count'], errors='coerce').fillna(0).astype(int)
 
-        # Calculate risk_score with proper NaN handling
-        df['risk_score'] = (
-            df['cvss_v3_score'] * 0.4 +
-            df['epss_score'] * 100 * 0.3 +
-            df['cisa_kev'].apply(lambda v: 10 if v else 0) +
-            df['has_exploit'].apply(lambda v: 5 if v else 0)
-        ).astype(float)
+    # Calculate risk score
+    df['risk_score'] = (
+        df['cvss_v3_score'] * 0.4 +
+        df['epss_score'] * 100 * 0.3 +
+        df['cisa_kev'].apply(lambda v: 10 if v else 0) +
+        df['has_exploit'].apply(lambda v: 5 if v else 0)
+    )
 
-        # Sort by risk score
-        df = df.sort_values('risk_score', ascending=False)
+    # Sort by risk score
+    df = df.sort_values('risk_score', ascending=False)
     
     # Step 3: Save outputs
     output_dir = Path("analysis")
@@ -213,15 +213,9 @@ def main():
     df.to_csv(csv_path, index=False, float_format='%.4f')
     print(f"✅ Saved enriched data to: {csv_path}")
     
-    # Save as JSON - replace NaN/None with 0.0 for numeric columns
-    df_json = df.copy()
-    df_json['cvss_v3_score'] = df_json['cvss_v3_score'].fillna(0.0)
-    df_json['epss_score'] = df_json['epss_score'].fillna(0.0)
-    df_json['epss_percentile'] = df_json['epss_percentile'].fillna(0.0)
-    df_json['risk_score'] = df_json['risk_score'].fillna(0.0)
-    
+    # Save as JSON
     json_path = output_dir / "vulnerabilities.json"
-    df_json.to_json(json_path, orient="records", indent=2)
+    df.to_json(json_path, orient="records", indent=2)
     print(f"✅ Saved JSON data to: {json_path}")
     
     # Generate summary

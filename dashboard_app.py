@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """
-Step 2: Complete Web Dashboard with all required features.
+Step 2: Interactive Web Dashboard for vulnerability visualization and triage.
 """
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
 from dash import Dash, dcc, html, dash_table, Input, Output, State
 import dash_bootstrap_components as dbc
-from flask import Flask
-import json
 
 # Load data
 print("Loading vulnerability data...")
@@ -35,9 +32,8 @@ except FileNotFoundError:
         'affected_cpe': ['paloaltonetworks:pan-os', 'microsoft:windows', 'smart-hm:webig']
     })
 
-# Initialize Dash app with Bootstrap
-server = Flask(__name__)
-app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Initialize Dash app
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Define pyramid tiers (in order from highest to lowest priority)
 PYRAMID_TIERS = [
@@ -59,17 +55,8 @@ def calculate_statistics():
         'with_exploits': int(df['has_exploit'].sum()),
         'cisa_kev': int(df['cisa_kev'].sum()),
         'vulncheck_kev': int(df['vulncheck_kev'].sum()),
-        'total_exploits': int(df['exploit_count'].sum()),
         'avg_risk_score': round(df['risk_score'].mean(), 2)
     }
-    
-    # Pyramid tier counts
-    tier_counts = {}
-    for tier in PYRAMID_TIERS:
-        count = len(df[df['priority_tier'] == tier])
-        tier_counts[tier] = count
-    
-    stats['tier_counts'] = tier_counts
     return stats
 
 stats = calculate_statistics()
@@ -334,16 +321,10 @@ def download_csv(n_clicks, table_data):
     [Input('vulnerability-table', 'data')]
 )
 def update_charts(data):
-    # Convert data back to DataFrame
     current_df = pd.DataFrame(data) if data else df
     
     # 1. Pyramid Chart
     tier_counts = current_df['priority_tier'].value_counts()
-    # Ensure all pyramid tiers are represented
-    for tier in PYRAMID_TIERS:
-        if tier not in tier_counts:
-            tier_counts[tier] = 0
-    
     pyramid_fig = go.Figure(data=[
         go.Bar(
             x=[tier_counts.get(tier, 0) for tier in PYRAMID_TIERS],
@@ -374,11 +355,12 @@ def update_charts(data):
     )
     cvss_fig.update_layout(height=350)
     
-    # 3. Exploit Maturity
+    # 3. Exploit Availability
     exploit_counts = current_df['has_exploit'].value_counts()
+    exploit_names = [('Has Exploits' if idx else 'No Exploits') for idx in exploit_counts.index]
     exploit_fig = px.pie(
         values=exploit_counts.values,
-        names=['Has Exploits', 'No Exploits'],
+        names=exploit_names,
         title="Exploit Availability",
         color_discrete_sequence=['red', 'green']
     )
@@ -433,8 +415,4 @@ if __name__ == '__main__':
     print("Press Ctrl+C to stop")
     print("="*60 + "\n")
     
-    # Run without debug/reloader and disable Dash dev tools hot reload
-    # to prevent client-side polling (/_reload-hash) which can cause
-    # automatic browser refreshes or scrolling.
-    app.run(debug=False, port=8050, use_reloader=False,
-            dev_tools_hot_reload=False, dev_tools_props_check=False, dev_tools_ui=False)
+    app.run(debug=False, port=8050, use_reloader=False)
